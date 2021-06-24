@@ -67,7 +67,7 @@ public class ClinicalTrialsGovCollection extends DocumentCollection<ClinicalTria
 
     public Segment(Path path) throws IOException {
       super(path);
-      if (this.path.toString().endsWith(".tgz")) {
+      if (this.path.toString().endsWith(".zip")) {
         zipInput = new ZipInputStream(new FileInputStream(path.toFile()));
       }
     }
@@ -100,7 +100,7 @@ public class ClinicalTrialsGovCollection extends DocumentCollection<ClinicalTria
       }
       // an ArchiveEntry may be a directory, so we need to read a next one.
       //   this must be done after the null check.
-      if (nextEntry.isDirectory()) {
+      if (nextEntry.isDirectory() || (!nextEntry.getName().endsWith(".xml"))) {
         getNextEntry();
       }
     }
@@ -154,16 +154,16 @@ public class ClinicalTrialsGovCollection extends DocumentCollection<ClinicalTria
     protected File sourceFile;
 
     /**
-     * The org_study_id field specifies an integer that is guaranteed to be unique for
+     * The org_study_id field specifies a code that is guaranteed to be unique for
      * every document in the corpus.
      */
-    protected int orgStudyId;
+    protected String orgStudyId;
 
     /**
-     * The secondary_id field specifies an integer that is guaranteed to be unique for
+     * The secondary_id field specifies a code that is guaranteed to be unique for
      * every document in the corpus.
      */
-    protected int secondaryId;
+    protected String secondaryId;
 
     /**
      * The nct_id field specifies a code that is guaranteed to be unique for
@@ -259,7 +259,7 @@ public class ClinicalTrialsGovCollection extends DocumentCollection<ClinicalTria
      *
      * @return the org_study_id
      */
-    public int getOrgStudyId() {
+    public String getOrgStudyId() {
       return orgStudyId;
     }
 
@@ -268,7 +268,7 @@ public class ClinicalTrialsGovCollection extends DocumentCollection<ClinicalTria
      *
      * @param orgStudyId the org_study_id to set
      */
-    public void setOrgStudyId(int orgStudyId) {
+    public void setOrgStudyId(String orgStudyId) {
       this.orgStudyId = orgStudyId;
     }
 
@@ -277,7 +277,7 @@ public class ClinicalTrialsGovCollection extends DocumentCollection<ClinicalTria
      *
      * @return the secondary_id
      */
-    public int getSecondaryId() {
+    public String getSecondaryId() {
       return secondaryId;
     }
 
@@ -286,7 +286,7 @@ public class ClinicalTrialsGovCollection extends DocumentCollection<ClinicalTria
      *
      * @param secondaryId the secondary_id to set
      */
-    public void setSecondaryId(int secondaryId) {
+    public void setSecondaryId(String secondaryId) {
       this.secondaryId = secondaryId;
     }
 
@@ -745,9 +745,9 @@ public class ClinicalTrialsGovCollection extends DocumentCollection<ClinicalTria
         Node child = children.item(i);
         String name = child.getNodeName();
         if (name.equals(ORG_STUDY_ID_TAG)) {
-          ct2Document.setOrgStudyId(Integer.parseInt(child.getTextContent()));
+          ct2Document.setOrgStudyId(child.getTextContent());
         } else if (name.equals(SECONDARY_ID_TAG)) {
-          ct2Document.setSecondaryId(Integer.parseInt(child.getTextContent()));
+          ct2Document.setSecondaryId(child.getTextContent());
         } else if (name.equals(NCT_ID_TAG)) {
           ct2Document.setNctId(child.getTextContent());
         }
