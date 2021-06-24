@@ -581,7 +581,7 @@ public class ClinicalTrialsGovCollection extends DocumentCollection<ClinicalTria
   }
 
   /**
-   * Parser for a document from a ClinicalTrials.gov Corpus</a>.
+   * Parser for a document from a ClinicalTrials.gov Corpus
    */
   public static class Parser {
     /** CT2 Constant */
