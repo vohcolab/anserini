@@ -338,7 +338,7 @@ public class ClinicalTrialsGovCollection extends DocumentCollection<ClinicalTria
     /**
      * Accessor for the acronym property.
      *
-     * @return the acronym
+     * @param the acronym to set
      */
     public void setAcronym(String acronym) {
       this.acronym = acronym;
