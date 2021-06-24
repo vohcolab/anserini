@@ -187,6 +187,18 @@ public class ClinicalTrialsGovCollection extends DocumentCollection<ClinicalTria
     protected String detailedDescription;
 
     /**
+     * The "condition" field specifies a list of descriptive terms.
+     * <p>
+     * Examples Include:
+     * <ol>
+     * <li>Cancer
+     * <li>Malnutrition
+     * <li>Knee Osteoarthritis
+     * </ol>
+     */
+    protected List<String> conditions = new ArrayList<String>();
+
+    /**
      * The criteria field specifies the criteria for inclusion and exclusion.
      */
     protected String criteria;
@@ -211,6 +223,18 @@ public class ClinicalTrialsGovCollection extends DocumentCollection<ClinicalTria
      * </ol>
      */
     protected List<String> keywords = new ArrayList<String>();
+
+    /**
+     * The "meshTerms" field specifies a list of descriptive terms.
+     * <p>
+     * Examples Include:
+     * <ol>
+     * <li>Malnutrition
+     * <li>Osteoarthritis
+     * <li>Joint Diseases
+     * </ol>
+     */
+    protected List<String> meshTerms = new ArrayList<String>();
 
     /**
      * Accessor for the sourceFile property.
@@ -375,6 +399,24 @@ public class ClinicalTrialsGovCollection extends DocumentCollection<ClinicalTria
     }
 
     /**
+     * Accessor for the conditions property.
+     *
+     * @return the conditions
+     */
+    public List<String> getConditions() {
+      return conditions;
+    }
+
+    /**
+     * Setter for the conditions property.
+     *
+     * @param conditions the descriptors to set
+     */
+    public void setConditions(List<String> conditions) {
+      this.conditions = conditions;
+    }
+
+    /**
      * Accessor for the criteria property.
      *
      * @return the criteria
@@ -465,6 +507,24 @@ public class ClinicalTrialsGovCollection extends DocumentCollection<ClinicalTria
     }
 
     /**
+     * Accessor for the conditions property.
+     *
+     * @return the meshTerms
+     */
+    public List<String> getMeshTerms() {
+      return meshTerms;
+    }
+
+    /**
+     * Setter for the meshTerms property.
+     *
+     * @param meshTerms the descriptors to set
+     */
+    public void setMeshTerms(List<String> meshTerms) {
+      this.meshTerms = meshTerms;
+    }
+
+    /**
      * Left justify a string by forcing it to be the specified length. This is
      * done by concatonating space characters to the end of the string until the
      * string is of the specified length. If, however, the string is initially
@@ -499,6 +559,8 @@ public class ClinicalTrialsGovCollection extends DocumentCollection<ClinicalTria
       appendProperty(sb, "briefSummary", briefSummary);
       appendProperty(sb, "detailedDescription", detailedDescription);
       appendProperty(sb, "keywords", keywords);
+      appendProperty(sb, "conditions", conditions);
+      appendProperty(sb, "meshTerms", meshTerms);
 
       return sb.toString();
     }
@@ -553,6 +615,9 @@ public class ClinicalTrialsGovCollection extends DocumentCollection<ClinicalTria
     private static final String DETAILED_DESCRIPTION_TAG = "detailed_description";
 
     /** CT2 Constant */
+    private static final String CONDITION_TAG = "condition";
+
+    /** CT2 Constant */
     private static final String ELIGIBILITY_TAG = "eligibility";
 
     /** CT2 Constant */
@@ -571,6 +636,12 @@ public class ClinicalTrialsGovCollection extends DocumentCollection<ClinicalTria
     private static final String KEYWORD_TAG = "keyword";
 
     /** CT2 Constant */
+    private static final String CONDITION_BROWSE_TAG = "condition_browse";
+
+    /** CT2 Constant */
+    private static final String MESH_TERM_TAG = "mesh_term";
+
+    /** CT2 Constant */
     private static final String TEXTBLOCK_TAG = "textblock";
 
 
@@ -579,9 +650,13 @@ public class ClinicalTrialsGovCollection extends DocumentCollection<ClinicalTria
 
       Document d = new Document(raw);
       d.id = String.valueOf(raw.getNctId());
-      d.contents = Stream.of(raw.getOfficialTitle(), raw.getBriefSummary(), raw.getDetailedDescription(), raw.getCriteria())
-        .filter(text -> text != null)
-        .collect(Collectors.joining("\n"));
+      d.contents = Stream.of(
+              raw.getOfficialTitle(), raw.getBriefSummary(), raw.getDetailedDescription(), raw.getCriteria(), "\n",
+              raw.getKeywords().stream().collect(Collectors.joining("\n")), "\n",
+              raw.getConditions().stream().collect(Collectors.joining("\n")), "\n",
+              raw.getMeshTerms().stream().collect(Collectors.joining("\n")))
+              .filter(text -> text != null)
+              .collect(Collectors.joining("\n"));
 
       return d;
     }
@@ -650,12 +725,31 @@ public class ClinicalTrialsGovCollection extends DocumentCollection<ClinicalTria
         } else if (name.equals(BRIEF_SUMMARY_TAG)) {
           ct2Document.setBriefSummary(child.getTextContent());
         } else if (name.equals(DETAILED_DESCRIPTION_TAG)) {
-          String text = getAllText(child).trim();
-          ct2Document.setDetailedDescription(text);
+          String detailedDescription = parseTextblock(child);
+          ct2Document.setDetailedDescription(detailedDescription);
+        } else if (name.equals(CONDITION_TAG)) {
+          ct2Document.getConditions().add(child.getTextContent());
         } else if (name.equals(ELIGIBILITY_TAG)) {
           handleEligibilityNode(child, ct2Document);
         } else if (name.equals(KEYWORD_TAG)) {
           ct2Document.getKeywords().add(child.getTextContent());
+        } else if (name.equals(CONDITION_BROWSE_TAG)) {
+          handleConditionBrowseNode(child, ct2Document);
+        }
+      }
+    }
+
+    private void handleIdInfoNode(Node node, RawDocument ct2Document) {
+      NodeList children = node.getChildNodes();
+      for (int i = 0; i < children.getLength(); i++) {
+        Node child = children.item(i);
+        String name = child.getNodeName();
+        if (name.equals(ORG_STUDY_ID_TAG)) {
+          ct2Document.setOrgStudyId(Integer.parseInt(child.getTextContent()));
+        } else if (name.equals(SECONDARY_ID_TAG)) {
+          ct2Document.setSecondaryId(Integer.parseInt(child.getTextContent()));
+        } else if (name.equals(NCT_ID_TAG)) {
+          ct2Document.setNctId(child.getTextContent());
         }
       }
     }
@@ -678,21 +772,17 @@ public class ClinicalTrialsGovCollection extends DocumentCollection<ClinicalTria
     }
 
     private void handleCriteriaNode(Node node, RawDocument ct2Document) {
-      String text = getAllText(node);
-      ct2Document.setCriteria(text.trim());
+      String criteria = parseTextblock(node);
+      ct2Document.setCriteria(criteria.trim());
     }
 
-    private void handleIdInfoNode(Node node, RawDocument ct2Document) {
+    private void handleConditionBrowseNode(Node node, RawDocument ct2Document) {
       NodeList children = node.getChildNodes();
       for (int i = 0; i < children.getLength(); i++) {
         Node child = children.item(i);
         String name = child.getNodeName();
-        if (name.equals(ORG_STUDY_ID_TAG)) {
-          ct2Document.setOrgStudyId(Integer.parseInt(child.getTextContent()));
-        } else if (name.equals(SECONDARY_ID_TAG)) {
-          ct2Document.setSecondaryId(Integer.parseInt(child.getTextContent()));
-        } else if (name.equals(NCT_ID_TAG)) {
-          ct2Document.setNctId(child.getTextContent());
+        if (name.equals(MESH_TERM_TAG)) {
+          ct2Document.getMeshTerms().add(child.getTextContent());
         }
       }
     }

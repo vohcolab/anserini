@@ -40,11 +40,9 @@ public class ClinicalTrialsGovCollectionTest extends DocumentCollectionTest<Clin
     totalDocs = 1;
 
     expected.put("NCT04862312",
-        Map.of("id", "NCT04862312"));
-//            "content", "Article Title\nArticle abstract.\nFirst paragraph.\nSecond paragraph.",
-//            "headline", "Article Title",
-//            "abstract", "Article abstract.",
-//            "body", "First paragraph.\nSecond paragraph."));
+        Map.of("id", "NCT04862312",
+            "acronym", "VideoDining",
+            "officialTitle", "VideoDining: Using Video Chat to Improve Nutritional Intake in Older Adults"));
   }
 
   @Override
@@ -53,10 +51,7 @@ public class ClinicalTrialsGovCollectionTest extends DocumentCollectionTest<Clin
 
     assertTrue(doc.indexable());
     assertEquals(expected.get("id"), nct.id());
-//    assertEquals(expected.get("content"), nct.contents());
-//    assertEquals(expected.get("content"), nct.raw());
-//    assertEquals(expected.get("headline"), nct.getRawDocument().getHeadline());
-//    assertEquals(expected.get("abstract"), nct.getRawDocument().getArticleAbstract());
-//    assertEquals(expected.get("body"), nct.getRawDocument().getBody());
+    assertEquals(expected.get("acronym"), nct.getRawDocument().getAcronym());
+    assertEquals(expected.get("officialTitle"), nct.getRawDocument().getOfficialTitle());
   }
 }
